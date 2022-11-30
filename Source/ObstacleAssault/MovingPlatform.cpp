@@ -18,34 +18,55 @@ void AMovingPlatform::BeginPlay()
 
 	startLocation = GetActorLocation();
 
+	FString myString = "My string value";
+
 	// ulog 입력
-	UE_LOG(LogTemp, Display, TEXT("Configured Moved Distance: %f"), moveDistance);
+	UE_LOG(LogTemp, Display, TEXT("Configured Moved Distance: %s"), *myString);
 }
 
 // Called every frame
-void AMovingPlatform::Tick(float DeltaTime)
+void AMovingPlatform::Tick(float _deltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(_deltaTime);
+	MovePlatform(_deltaTime);
+	RotatePlatform(_deltaTime);
+}
 
-
-	// Move platform forwards
-		// Get current location
-	FVector currentLocation = GetActorLocation();
-		// Add vector to that location
-	currentLocation = currentLocation + (platformVelocity * DeltaTime);
-		// Set the location
-	SetActorLocation(currentLocation);
-	// Send platform back if gone too far
-		// Check how far we've moved
-	float distanceMoved =	FVector::Dist(startLocation, currentLocation);
-		// Reverse direction of motion if gone too far
-	if(	distanceMoved > moveDistance){
-		float overShoot = distanceMoved - moveDistance;
-		UE_LOG(LogTemp, Display, TEXT("Your message %f"), overShoot);
+void AMovingPlatform::MovePlatform(float _deltaTime)
+{
+	// Reverse direction of motion if gone too far
+	if(ShouldPlatformReturn())
+	{
 		FVector moveDirection = platformVelocity.GetSafeNormal();
 		startLocation = startLocation + moveDirection * moveDistance;
 		SetActorLocation(startLocation);
 		platformVelocity = -platformVelocity;
 	}
+	else
+	{
+		// Move platform forwards
+			// Get current location
+		FVector currentLocation = GetActorLocation();
+			// Add vector to that location
+		currentLocation = currentLocation + (platformVelocity * _deltaTime);
+		SetActorLocation(currentLocation);
+	}
 }
 
+void AMovingPlatform::RotatePlatform(float _deltaTime)
+{
+	// FRotator currentRotation = GetActorRotation();
+	// currentRotation = currentRotation + rotationVelocity * _deltaTime;
+	// SetActorRotation(currentRotation);
+	AddActorLocalRotation(rotationVelocity * _deltaTime);
+}
+
+bool AMovingPlatform::ShouldPlatformReturn() const
+{
+	return GetDistanceMoved() > moveDistance;
+}
+
+float AMovingPlatform::GetDistanceMoved() const
+{
+	return FVector::Dist(startLocation, GetActorLocation());
+}
